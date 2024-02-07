@@ -3,6 +3,12 @@ package com.example.demo.service;
 import com.example.demo.entity.User;
 import com.example.demo.entity.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -11,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.MessageFormat;
-import java.util.Optional;
+import java.util.Collections;
 
 @Service
 public class UserManager implements UserDetailsManager {
@@ -40,14 +46,29 @@ public class UserManager implements UserDetailsManager {
         userRepository.delete(user);
     }
 
-    public String deleteUserById(String id) {
-        userRepository.deleteById(id);
-        return "User got deleted";
-    }
-
     @Override
     public void changePassword(String oldPassword, String newPassword) {
+        Authentication currentUser = SecurityContextHolder.getContext().getAuthentication();
+        if (currentUser == null) {
+            throw new AccessDeniedException("Cannot change password as no user is authenticated.");
+        }
 
+        String username = currentUser.getName();
+
+//        try {
+//            Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(username, oldPassword, Collections.EMPTY_LIST);
+//        } catch (AuthenticationException e) {
+//            throw new BadCredentialsException("Current password is incorrect.");
+//        }
+
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
+                new UsernameNotFoundException("User not found: " + username));
+
+        String encodedPassword = passwordEncoder.encode(newPassword);
+
+        user.setPassword(encodedPassword);
+
+        userRepository.save(user);
     }
 
     @Override

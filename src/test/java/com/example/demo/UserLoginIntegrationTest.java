@@ -30,7 +30,8 @@ public class UserLoginIntegrationTest {
                         .content(userJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists())
-                .andExpect(jsonPath("$.refreshToken").exists());
+                .andExpect(jsonPath("$.refreshToken").exists())
+                .andDo(print());;
     }
 
     @Test

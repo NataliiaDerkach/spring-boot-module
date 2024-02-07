@@ -6,6 +6,7 @@ import com.example.demo.dto.TokenDTO;
 import com.example.demo.entity.User;
 import com.example.demo.exeption.CustomException;
 import com.example.demo.security.TokenGenerator;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/auth")
+@Slf4j
 public class AuthController {
     @Autowired
     UserDetailsManager userDetailsManager;
@@ -44,15 +46,18 @@ public class AuthController {
         userDetailsManager.createUser(user);
 
         Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(user, signupDTO.getPassword(), Collections.EMPTY_LIST);
-
+        log.info("User: {} registered successfully!", signupDTO.getUsername());
         return ResponseEntity.ok(tokenGenerator.createToken(authentication));
     }
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody LoginDTO loginDTO) {
         try {
+
             Authentication authentication = daoAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
+            log.info("User {} is authenticated!", loginDTO.getUsername());
             return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+
         } catch (AuthenticationException e) {
             throw new CustomException(HttpStatus.UNAUTHORIZED, "Unauthorized: Incorrect username or password");
         }
