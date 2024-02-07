@@ -4,13 +4,16 @@ import com.example.demo.dto.LoginDTO;
 import com.example.demo.dto.SignupDTO;
 import com.example.demo.dto.TokenDTO;
 import com.example.demo.entity.User;
+import com.example.demo.exeption.CustomException;
 import com.example.demo.security.TokenGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.BearerTokenAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
@@ -47,9 +50,12 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity login(@RequestBody LoginDTO loginDTO) {
-        Authentication authentication = daoAuthenticationProvider.authenticate(UsernamePasswordAuthenticationToken.unauthenticated(loginDTO.getUsername(), loginDTO.getPassword()));
-
-        return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+        try {
+            Authentication authentication = daoAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword()));
+            return ResponseEntity.ok(tokenGenerator.createToken(authentication));
+        } catch (AuthenticationException e) {
+            throw new CustomException(HttpStatus.UNAUTHORIZED, "Unauthorized: Incorrect username or password");
+        }
     }
 
     @PostMapping("/token")
