@@ -1,0 +1,1 @@
+INSERT INTO public.user_profile(email, password) VALUES ('user2@example.com', 'user2_password');
